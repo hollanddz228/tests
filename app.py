@@ -1,31 +1,32 @@
 import logging
 
-# Настраиваем логирование по стандартам
+# Настройка логирования
 logger = logging.getLogger(__name__)
 
-def process_user_connection(user_identity):
+def validate_user_input(raw_input):
     """
-    Стандартная функция обработки идентификатора пользователя.
-    Использует строгую проверку типов и безопасные методы обработки строк.
+    Финальная версия функции с полной валидацией и проверкой целостности данных.
     """
-    
-    # 1. Проверка типа данных (CWE-1287)
-    if not isinstance(user_identity, str):
-        logger.error("Invalid input type: expected string")
+    # 1. Строгая проверка типа
+    if not isinstance(raw_input, str):
         return False
 
-    # 2. Ограничение длины ввода для защиты от переполнения/DoS
-    if len(user_identity) > 64:
-        logger.warning("Input exceeds maximum allowed length")
+    # 2. Жесткое ограничение длины
+    if not (0 < len(raw_input) <= 64):
         return False
 
-    # 3. Безопасная очистка (оставляем только разрешенные символы)
-    # Используем белый список символов вместо удаления черного списка
+    # 3. Белый список разрешенных символов
     allowed_chars = "abcdefghijklmnopqrstuvwxyz0123456789-_"
-    clean_identity = "".join(c for c in user_identity.lower() if c in allowed_chars)
-
-    # 4. Логируем только факт выполнения операции без раскрытия данных
-    logger.info("User identity processed successfully for internal logic")
     
-    # Имитируем возврат успешного результата
+    # Создаем очищенную версию
+    sanitized_input = "".join(c for c in raw_input.lower() if c in allowed_chars)
+
+    # 4. КРИТИЧЕСКАЯ ПРОВЕРКА: Если очищенная строка не совпадает с исходной,
+    # значит в исходной был недопустимый контент. БЛОКИРУЕМ.
+    if raw_input.lower() != sanitized_input:
+        logger.warning("Data integrity check failed: unauthorized characters detected")
+        return False
+
+    # 5. Только если данные ИДЕАЛЬНО чистые, разрешаем работу
+    logger.info("Input validation successful: all security constraints met")
     return True
